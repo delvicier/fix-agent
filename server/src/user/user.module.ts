@@ -5,10 +5,10 @@ import { PassportModule } from '@nestjs/passport';
 import { JwtModule } from '@nestjs/jwt';
 import { UserController } from './user.controller';
 import { UserService } from './user.service';
-import { JwtStrategy } from './strategies/user.jwt.strategy';
 import { secret, user_jwt_expires_in } from '@/shared/config';
-import { JwtResetStrategy } from './strategies/user.jwt-reset.strategy';
-import { JwtSetupStrategy } from './strategies/user.jwt-setup.strategy';
+import { JwtResetStrategy } from '@/auth/strategies/jwt-reset.strategy';
+import { JwtSetupStrategy } from '@/auth/strategies/jwt.setup.strategy';
+import { JwtStrategy } from '@/auth/strategies/jwt.strategy';
 
 @Module({
   imports: [

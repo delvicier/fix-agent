@@ -3,8 +3,11 @@ import { JwtService } from '@nestjs/jwt';
 import { SchedulerRegistry } from '@nestjs/schedule';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { User } from './user.entity';
-import { setupSecret, setup_jwt_expires_in } from '../shared/config';
+import { User } from '../user/user.entity';
+import { setup_jwt_expires_in, setupSecret, port } from '../shared/config';
+
+import * as qrcode from 'qrcode-terminal';
+import * as os from 'os';
 
 const SETUP_INTERVAL_NAME = 'setup-token-generator';
 const TREINTA_MINUTOS_MS = 30 * 60 * 1000;
@@ -21,24 +24,18 @@ export class SetupTokenService implements OnApplicationBootstrap {
   ) {}
 
   async onApplicationBootstrap() {
-    this.logger.log('Verificando estado del usuario administrador (id: 1)...');
     const userExists = await this.doesAdminUserExist();
 
     if (userExists) {
-      this.logger.log('El usuario (id: 1) ya existe. El generador de tokens de setup no se iniciará.');
       return;
     }
-
-    this.logger.warn('¡ADVERTENCIA! El usuario (id: 1) no existe.');
-    this.logger.warn('Iniciando generador de tokens de setup...');
 
     this.generateAndLogToken();
 
     const interval = setInterval(
       () => this.generateAndLogToken(),
-      TREINTA_MINUTOS_MS
+      TREINTA_MINUTOS_MS,
     );
-
     this.schedulerRegistry.addInterval(SETUP_INTERVAL_NAME, interval);
   }
 
@@ -46,7 +43,7 @@ export class SetupTokenService implements OnApplicationBootstrap {
     const userExists = await this.doesAdminUserExist();
 
     if (userExists) {
-      this.logger.log('Usuario (id: 1) detectado. Deteniendo el generador de tokens de setup.');
+      this.logger.log('Usuario creado. Deteniendo setup.');
       this.schedulerRegistry.deleteInterval(SETUP_INTERVAL_NAME);
       return;
     }
@@ -57,10 +54,21 @@ export class SetupTokenService implements OnApplicationBootstrap {
       expiresIn: setup_jwt_expires_in,
     });
 
-    this.logger.log('================================================================');
-    this.logger.log('|| NUEVO TOKEN DE SETUP (Válido por 30 min):');
-    this.logger.log(`|| ${token}`);
-    this.logger.log('================================================================');
+    const ip = this.getLocalIpAddress();
+    const currentPort = port || 3000;
+    const url = `http://${ip}:${currentPort}`;
+
+    console.log('\n');
+
+    console.log('\x1b[36m%s\x1b[0m', '> QR Creación de Usuario ( Expires 30m )');
+
+    const qrOptions = { small: true, errorCorrectionLevel: 'L' as const };
+    qrcode.generate(token, qrOptions, (qr) => {
+        console.log(qr);
+    });
+
+    console.log('\x1b[32m%s\x1b[0m', `> URL local: ${url}`);
+    console.log('\n');
   }
 
   private async doesAdminUserExist(): Promise<boolean> {
@@ -68,8 +76,22 @@ export class SetupTokenService implements OnApplicationBootstrap {
       const user = await this.userRepository.findOne({ where: { id: 1 } });
       return !!user;
     } catch (error) {
-      this.logger.error('Error al verificar la existencia del usuario', error.stack);
       return false;
     }
+  }
+
+  private getLocalIpAddress(): string {
+    const interfaces = os.networkInterfaces();
+    for (const devName in interfaces) {
+      const iface = interfaces[devName];
+      if (!iface) continue;
+      for (let i = 0; i < iface.length; i++) {
+        const alias = iface[i];
+        if (alias.family === 'IPv4' && alias.address !== '127.0.0.1' && !alias.internal) {
+          return alias.address;
+        }
+      }
+    }
+    return 'localhost';
   }
 }

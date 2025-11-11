@@ -1,9 +1,9 @@
 import { IsString, MinLength, IsNotEmpty } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
 
-export class UserCreateDto {
+export class AuthCredentialsDto {
   @ApiProperty({
-    description: 'Nombre de usuario único',
+    description: 'Nombre de usuario',
     example: 'admin',
   })
   @IsString()
@@ -12,7 +12,7 @@ export class UserCreateDto {
   usuario: string;
 
   @ApiProperty({
-    description: 'Contraseña del usuario (mínimo 8 caracteres)',
+    description: 'Contraseña (mínimo 8 caracteres)',
     example: 'supersecret123',
   })
   @IsString()

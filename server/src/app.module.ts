@@ -11,6 +11,7 @@ import { ClientsModule } from './clients/clients.module';
 import { MachinesModule } from './machines/machines.module';
 import { AuthModule } from './auth/auth.module';
 import { ScheduleModule } from '@nestjs/schedule';
+import { SpacesModule } from './spaces/spaces.module';
 
 @Module({
   imports: [
@@ -32,6 +33,7 @@ import { ScheduleModule } from '@nestjs/schedule';
     ClientsModule,
     MachinesModule,
     AuthModule,
+    SpacesModule,
   ],
   controllers: [AppController],
   providers: [AppService],

@@ -8,6 +8,7 @@ android {
     namespace = "com.delvicier.fixagent"
     compileSdk {
         version = release(36)
+
     }
 
     defaultConfig {
